@@ -3,10 +3,10 @@ module RestrictedSubdomain
     def self.included(base)
       base.extend(ClassMethods)
     end
-    
+
     module ClassMethods
       protected
-      
+
       ##
       # == General
       #
@@ -63,17 +63,17 @@ module RestrictedSubdomain
           :through => 'Agency',
           :by => :code
         }.merge(opts)
-        
+
         append_before_filter :current_subdomain
         cattr_accessor :subdomain_klass, :subdomain_column
         self.subdomain_klass = options[:through].constantize
         self.subdomain_column = options[:by]
         helper_method :current_subdomain
-        
+
         include RestrictedSubdomain::Controller::InstanceMethods
       end
     end
-    
+
     module InstanceMethods
       ##
       # Returns the current subdomain model. Inspects request.host to figure out
@@ -91,7 +91,7 @@ module RestrictedSubdomain
         end
         @_current_subdomain
       end
-      
+
       ##
       # Returns a symbol of the current subdomain. So, something like
       # http://secksi.example.com returns :secksi
@@ -103,7 +103,7 @@ module RestrictedSubdomain
           nil
         end
       end
-      
+
       ##
       # Overwrite the default accessor that will force all session access to
       # a subhash keyed on the restricted subdomain symbol. Only works if
@@ -117,7 +117,7 @@ module RestrictedSubdomain
           request.session
         end
       end
-      
+
       ##
       # Forces all session assignments to a subhash keyed on the current
       # subdomain symbol, if found. Otherwise works just like normal.

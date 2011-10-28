@@ -3,7 +3,7 @@ module RestrictedSubdomain
     def self.included(base)
       base.extend(ClassMethods)
     end
-    
+
     module ClassMethods
       ##
       # This method will mark a class as the subdomain model. It expects to
@@ -29,11 +29,11 @@ module RestrictedSubdomain
         options = {
           :by => :code
         }.merge(opts)
-        
+
         validates_presence_of options[:by]
         validates_uniqueness_of options[:by]
         cattr_accessor :current
-        
+
         self.class_eval <<-RUBY
           def self.each_subdomain(&blk)
             old_current = self.current
@@ -54,7 +54,7 @@ module RestrictedSubdomain
           end
         RUBY
       end
-      
+
       ##
       # This method marks a model as restricted to a subdomain. This means that
       # it will have an association to whatever class models your subdomain,
@@ -69,11 +69,11 @@ module RestrictedSubdomain
       # validates_uniqueness_of. It should be scoped to the foreign key.
       #
       # Example:
-      #   
+      #
       #   class Widget < ActiveRecord::Base
       #     acts_as_restricted_subdomain :through => :subdomain
       #   end
-      #   
+      #
       #   class Subdomain < ActiveRecord::Base
       #     use_for_restricted_subdomains :by => :name
       #   end
@@ -96,7 +96,7 @@ module RestrictedSubdomain
           include InstanceMethods
         end
       end
-      
+
       ##
       # Checks to see if the class has been restricted to a subdomain.
       #
@@ -104,14 +104,14 @@ module RestrictedSubdomain
         self.included_modules.include?(InstanceMethods)
       end
     end
-    
+
     module InstanceMethods # :nodoc:
       def self.included(base) # :nodoc:
         base.extend(ClassMethods)
       end
-      
+
       private
-      
+
       def set_restricted_subdomain_column
         self.send("#{subdomain_symbol}=", subdomain_klass.current)
         if self.send("#{subdomain_symbol}_id").nil?
@@ -121,31 +121,31 @@ module RestrictedSubdomain
           true
         end
       end
-      
+
       public
-      
+
       module ClassMethods
         def find_with_subdomain(*args)
           options = extract_options_from_args!(args) rescue args.extract_options!
           validate_find_options(options)
           set_readonly_option!(options)
           options[:with_subdomain] = true
-          
+
           case args.first
             when :first then find_initial(options)
             when :all   then find_every(options)
             else             find_from_ids(args, options)
           end
         end
-        
+
         def count_with_subdomain(*args)
           calculate_with_subdomain(:count, *construct_subdomain_options_from_legacy_args(*args))
         end
-        
+
         def construct_subdomain_options_from_legacy_args(*args)
           options     = {}
           column_name = :all
-          
+
           # We need to handle
           #   count()
           #   count(options={})
@@ -163,31 +163,31 @@ module RestrictedSubdomain
               options.merge!(:joins      => args[1]) if args[1]
             end
           end
-          
+
           [column_name, options]
         end
-        
+
         def count(*args)
           with_subdomain_scope { count_with_subdomain(*args) }
         end
-        
+
         def calculate(*args)
           with_subdomain_scope { calculate_with_subdomain(*args) }
         end
-        
+
         protected
-        
+
         def with_subdomain_scope(&block)
           if subdomain_klass.current
             subdomain_id = subdomain_klass.current[subdomain_klass.primary_key]
             with_scope({ :find => { :conditions => ["#{table_name}.#{subdomain_symbol}_id = ?", subdomain_id ] } }, :merge, &block)
           else
             with_scope({}, :merge, &block)
-          end 
+          end
         end
-        
+
         private
-        
+
         def find_every(options)
           options.delete(:with_subdomain) ?
             find_every_with_subdomain(options) :
